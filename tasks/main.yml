@@ -10,6 +10,21 @@
     name: python-pip
     state: present
 
+- name: '{{ role_name }} | Add locale for python'
+  lineinfile:
+    path: /root/.bash_profile
+    insertafter: 'EOF'
+    line: 'export LC_ALL=en_US.UTF-8'
+
+- name: '{{ role_name }} | Add locale for python'
+  lineinfile:
+    path: /home/{{ ansible_user }}/.bash_profile
+    insertafter: 'EOF'
+    line: 'export LANG=en_US.UTF-8'
+
+- name: '{{ role_name }} | Reload .bash_profile'
+  shell: source /home/{{ ansible_user }}/.bash_profile
+  
 
 - name: '{{ role_name }} | Create directory for B2 Command Line Tool'
   file: path=/op/backblaze-cli state=directory
@@ -28,3 +43,23 @@
   shell: python setup.py install
   args:
     chdir: /opt/backblaze-cli/
+
+- name: '{{ role_name }} | Authorize with all account to b2 with accountid and application key'
+  shell: b2 authorize-account {{ item.account_id }} {{ item.application_key }}
+  with_items: "{{ accounts }}"
+  
+- name: '{{ role_name }} | Syncing... it may will take a few minutes'
+  shell: b2 sync {{ item.source }} {{ item.dest }}
+  with_items: "{{ sync_lists }}"
+
+- name: '{{ role_name }} | Add cronjobs'
+  cron:
+    name: '{{ item.name }}'
+    weekday: '{{ item.weekday }}'
+    minute: '{{ item.minute }}'
+    hour: '{{ item.hour }}'
+    month: '{{ item.month }}'
+    user: '{{ ansible_user }}'
+    job: 'b2 sync {{ item.sync_options }} {{ item.source }} {{ item.dest }}'
+  with_items: "{{ sync_lists }}"
+  
