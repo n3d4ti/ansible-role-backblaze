@@ -1,0 +1,30 @@
+---
+# tasks file for ansible-role-backblaze
+- name: '{{ role_name }} | Install Git'
+  package:
+    name: git
+    state: present
+
+- name: '{{ role_name }} | Install pip'
+  package:
+    name: python-pip
+    state: present
+
+
+- name: '{{ role_name }} | Create directory for B2 Command Line Tool'
+  file: path=/op/backblaze-cli state=directory
+
+- name: '{{ role_name }} | Clone B2 Command Line Tool'
+  git:
+    repo: 'https://github.com/Backblaze/B2_Command_Line_Tool.git'
+    dest: /opt/backblaze-cli/
+
+- name: '{{ role_name }} | Install setup tools for B2 Command Line Tool'
+  shell: pip install "setuptools>=20.2"
+  args:
+    chdir: /opt/backblaze-cli/
+
+- name: '{{ role_name }} | Install B2 Command Line Tool'
+  shell: python setup.py install
+  args:
+    chdir: /opt/backblaze-cli/
